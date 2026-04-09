@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CETRAM RTP</title>
+    <title>Sistema CETRAM RTP</title>
+
+    <!-- Librerías para exportar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         body {
             font-family: Arial;
-            background: #eef5ee;
+            background: #ffffff;
             padding: 20px;
         }
 
         h2 {
-            color: #1b5e20;
+            color: #2e7d32;
         }
 
         .form {
@@ -19,7 +23,7 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
-            border-left: 6px solid #2e7d32;
+            border-left: 6px solid #66bb6a;
         }
 
         input, select {
@@ -37,7 +41,9 @@
         }
 
         .guardar { background: #2e7d32; color: white; }
-        .resumen { background: #1b5e20; color: white; }
+        .resumen { background: #388e3c; color: white; }
+        .excel { background: #1b5e20; color: white; }
+        .pdf { background: #4caf50; color: white; }
 
         table {
             width: 100%;
@@ -46,8 +52,8 @@
         }
 
         th {
-            background: #2e7d32;
-            color: white;
+            background: #66bb6a;
+            color: black;
             font-size: 12px;
         }
 
@@ -67,7 +73,7 @@
             background: white;
             padding: 15px;
             border-radius: 10px;
-            border-left: 6px solid #2e7d32;
+            border-left: 6px solid #66bb6a;
         }
     </style>
 </head>
@@ -97,10 +103,14 @@
         <option>PERIFÉRICO ORIENTE</option>
     </select>
 
-    <input id="codigo" placeholder="Código (ej: 4-1432)">
+    <input id="economico" placeholder="Económico">
+    <input id="modulo" placeholder="Módulo">
+    <input id="ruta" placeholder="Ruta (ej: 4-1432)">
 
     <button class="guardar" onclick="guardar()">Agregar</button>
     <button class="resumen" onclick="generar()">Generar Resumen</button>
+    <button class="excel" onclick="exportarExcel()">Exportar Excel</button>
+    <button class="pdf" onclick="exportarPDF()">Exportar PDF</button>
 </div>
 
 <div class="contenedor">
@@ -114,7 +124,7 @@
 
 <div class="resumen-box">
     <h3>📊 Resumen</h3>
-    <table>
+    <table id="tablaResumen">
         <thead>
             <tr>
                 <th>CETRAM</th>
@@ -142,7 +152,7 @@ columnas.forEach(c => {
     if (!datos[c]) datos[c] = [];
 });
 
-// Crear encabezados
+// Encabezados
 const headerRow = document.getElementById("headers");
 columnas.forEach(c => {
     headerRow.innerHTML += `<th>${c}</th>`;
@@ -150,15 +160,21 @@ columnas.forEach(c => {
 
 function guardar() {
     const cetram = document.getElementById("cetram").value;
-    const codigo = document.getElementById("codigo").value;
+    const economico = document.getElementById("economico").value;
+    const modulo = document.getElementById("modulo").value;
+    const ruta = document.getElementById("ruta").value;
 
-    if (!codigo) return alert("Ingresa código");
+    if (!economico || !modulo || !ruta) {
+        return alert("Completa todos los campos");
+    }
 
-    datos[cetram].push(codigo);
+    datos[cetram].push({ economico, modulo, ruta });
 
     localStorage.setItem("datos", JSON.stringify(datos));
 
-    document.getElementById("codigo").value = "";
+    document.getElementById("economico").value = "";
+    document.getElementById("modulo").value = "";
+    document.getElementById("ruta").value = "";
 
     renderTabla();
 }
@@ -173,7 +189,16 @@ function renderTabla() {
         let fila = "<tr>";
 
         columnas.forEach(c => {
-            fila += `<td>${datos[c][i] || ""}</td>`;
+            if (datos[c][i]) {
+                const d = datos[c][i];
+                fila += `<td>
+                    ${d.economico}<br>
+                    M${d.modulo}<br>
+                    ${d.ruta}
+                </td>`;
+            } else {
+                fila += `<td></td>`;
+            }
         });
 
         fila += "</tr>";
@@ -186,15 +211,13 @@ function generar() {
     let total = 0;
 
     columnas.forEach(c => {
-        datos[c].forEach(codigo => {
-            let modulo = codigo.split("-")[0];
-
-            let key = c + "-" + modulo;
+        datos[c].forEach(d => {
+            let key = c + "-" + d.modulo;
 
             if (!resumen[key]) {
                 resumen[key] = {
                     cetram: c,
-                    modulo: modulo,
+                    modulo: d.modulo,
                     cantidad: 0
                 };
             }
@@ -217,6 +240,48 @@ function generar() {
     });
 
     document.getElementById("total").innerText = "TOTAL GENERAL: " + total;
+}
+
+// EXPORTAR A EXCEL
+function exportarExcel() {
+    let data = [["CETRAM","MODULO","ECONOMICO","RUTA"]];
+
+    columnas.forEach(c => {
+        datos[c].forEach(d => {
+            data.push([c, d.modulo, d.economico, d.ruta]);
+        });
+    });
+
+    let ws = XLSX.utils.aoa_to_sheet(data);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "CETRAM");
+
+    XLSX.writeFile(wb, "CETRAM_RTP.xlsx");
+}
+
+// EXPORTAR A PDF
+function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    let y = 10;
+    doc.text("Reporte CETRAM RTP", 10, y);
+
+    y += 10;
+
+    columnas.forEach(c => {
+        datos[c].forEach(d => {
+            doc.text(`${c} | M${d.modulo} | ${d.economico} | ${d.ruta}`, 10, y);
+            y += 7;
+
+            if (y > 280) {
+                doc.addPage();
+                y = 10;
+            }
+        });
+    });
+
+    doc.save("CETRAM_RTP.pdf");
 }
 
 renderTabla();
