@@ -14,28 +14,45 @@ body {
     padding: 20px;
 }
 
-h2 { color: #2e7d32; }
+/* TITULO */
+h2 {
+    color: #2e7d32;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
+/* FORMULARIO (MENÚ VERDE CLARO) */
 .form {
-    background: #ffffff;
+    background: #e8f5e9;
     padding: 15px;
     border-radius: 10px;
     margin-bottom: 20px;
     border-left: 6px solid #66bb6a;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
+/* INPUTS */
 input, select {
     padding: 8px;
     margin: 5px;
-    border-radius: 5px;
+    border-radius: 6px;
     border: 1px solid #ccc;
+    background: #ffffff;
+    min-width: 150px;
 }
 
+/* BOTONES */
 button {
     padding: 8px 12px;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
     border: none;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
 }
 
 .agregar { background: #2e7d32; color: white; }
@@ -43,48 +60,63 @@ button {
 .excel { background: green; color: white; }
 .pdf { background: red; color: white; }
 
+/* BLOQUES */
 .bloques {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
 }
 
+/* TARJETAS CETRAM */
 .cetram-box {
     width: 320px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
+/* ENCABEZADO CETRAM */
 .cetram-box h3 {
     margin: 0;
-    padding: 6px;
-    background: #66bb6a;
+    padding: 8px;
+    background: #a5d6a7;
     text-align: center;
+    border-radius: 10px 10px 0 0;
 }
 
+/* TABLAS */
 table {
     width: 100%;
     border-collapse: collapse;
 }
 
 th {
-    background: #66bb6a;
+    background: #c8e6c9;
     color: black;
     font-size: 12px;
 }
 
 td {
-    border: 1px solid #ccc;
+    border: 1px solid #eee;
     text-align: center;
-    padding: 5px;
+    padding: 6px;
     font-size: 12px;
 }
 
+/* RESUMEN */
 .resumen-box {
     width: 350px;
     margin-top: 20px;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     padding: 10px;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.resumen-box h4 {
+    margin-top: 0;
 }
 </style>
 </head>
@@ -94,7 +126,6 @@ td {
 <h2>🟢 Sistema CETRAM RTP</h2>
 
 <div class="form">
-    
 
 <select id="cetram">
 <option value="">Seleccionar el Cetram</option>
@@ -118,7 +149,6 @@ td {
 </select>
 
 <input id="economico" placeholder="Económico">
-    
 
 <select id="modulo">
 <option value="">Seleccionar el Módulo</option>
