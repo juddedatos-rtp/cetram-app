@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CETRAM</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input { margin: 5px; padding: 5px; }
+        button { padding: 6px 10px; margin: 5px; }
+        table { border-collapse: collapse; margin-top: 20px; }
+        td, th { border: 1px solid #ccc; padding: 8px; }
+    </style>
+</head>
+<body>
+
+<h2>Registro CETRAM</h2>
+
+<input id="cetram" placeholder="CETRAM">
+<input id="modulo" placeholder="Módulo">
+<input id="codigo" placeholder="Código">
+
+<button onclick="guardar()">Guardar</button>
+<button onclick="generar()">Generar Resumen</button>
+<button onclick="limpiar()">Limpiar Todo</button>
+
+<table id="tabla">
+    <thead>
+        <tr>
+            <th>CETRAM</th>
+            <th>MÓDULO</th>
+            <th>CANTIDAD</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<h3 id="total"></h3>
+
+<script>
+let datos = JSON.parse(localStorage.getItem("datos")) || [];
+
+function guardar() {
+    const cetram = document.getElementById("cetram").value.toUpperCase();
+    const modulo = document.getElementById("modulo").value;
+    const codigo = document.getElementById("codigo").value;
+
+    if (!cetram || !modulo || !codigo) {
+        alert("Llena todos los campos");
+        return;
+    }
+
+    datos.push({ cetram, modulo, codigo });
+    localStorage.setItem("datos", JSON.stringify(datos));
+
+    alert("Guardado");
+}
+
+function generar() {
+    let resumen = {};
+
+    datos.forEach(d => {
+        let key = d.cetram + "-" + d.modulo;
+
+        if (!resumen[key]) {
+            resumen[key] = {
+                cetram: d.cetram,
+                modulo: d.modulo,
+                cantidad: 0
+            };
+        }
+
+        resumen[key].cantidad++;
+    });
+
+    let tbody = document.querySelector("#tabla tbody");
+    tbody.innerHTML = "";
+
+    let total = 0;
+
+    Object.values(resumen).forEach(r => {
+        let row = `<tr>
+            <td>${r.cetram}</td>
+            <td>${r.modulo}</td>
+            <td>${r.cantidad}</td>
+        </tr>`;
+
+        tbody.innerHTML += row;
+        total += r.cantidad;
+    });
+
+    document.getElementById("total").innerText = "TOTAL: " + total;
+}
+
+function limpiar() {
+    localStorage.clear();
+    location.reload();
+}
+</script>
+
+</body>
+</html>
