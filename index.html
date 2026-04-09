@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CETRAM App</title>
+    <title>CETRAM RTP</title>
+
     <style>
         body {
             font-family: Arial;
-            background: #f4f6f9;
+            background: #eef5ee;
             padding: 20px;
         }
 
         h2 {
-            color: #333;
+            color: #1b5e20;
         }
 
         .form {
-            background: white;
+            background: #ffffff;
             padding: 15px;
             border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            border-left: 6px solid #2e7d32;
         }
 
-        input {
+        input, select {
             padding: 8px;
             margin: 5px;
-            border: 1px solid #ccc;
             border-radius: 5px;
+            border: 1px solid #ccc;
         }
 
         button {
@@ -35,71 +36,81 @@
             cursor: pointer;
         }
 
-        .guardar { background: #28a745; color: white; }
-        .resumen { background: #007bff; color: white; }
-        .limpiar { background: #dc3545; color: white; }
+        .guardar { background: #2e7d32; color: white; }
+        .resumen { background: #1b5e20; color: white; }
 
         table {
             width: 100%;
             border-collapse: collapse;
             background: white;
-            margin-top: 15px;
         }
 
         th {
-            background: #343a40;
+            background: #2e7d32;
             color: white;
+            font-size: 12px;
         }
 
-        td, th {
-            padding: 10px;
-            border: 1px solid #ddd;
+        td {
+            border: 1px solid #ccc;
             text-align: center;
+            padding: 5px;
+            font-size: 12px;
         }
 
-        .acciones button {
-            margin: 2px;
+        .contenedor {
+            overflow-x: auto;
         }
-
-        .editar { background: #ffc107; }
-        .eliminar { background: #dc3545; color: white; }
 
         .resumen-box {
             margin-top: 20px;
             background: white;
             padding: 15px;
             border-radius: 10px;
+            border-left: 6px solid #2e7d32;
         }
     </style>
 </head>
 
 <body>
 
-<h2>📋 Registro CETRAM</h2>
+<h2>🟢 Sistema CETRAM RTP</h2>
 
 <div class="form">
-    <input id="cetram" placeholder="CETRAM">
-    <input id="modulo" placeholder="Módulo">
-    <input id="codigo" placeholder="Código">
+    <select id="cetram">
+        <option>ZARAGOZA</option>
+        <option>PANTITLÁN</option>
+        <option>SANTA MARTA</option>
+        <option>INDIOS VERDES</option>
+        <option>POTRERO</option>
+        <option>LA RAZA</option>
+        <option>CHAPULTEPEC</option>
+        <option>MIXCOAC</option>
+        <option>UNIVERSIDAD</option>
+        <option>ZAPATA</option>
+        <option>CONSTITUCIÓN DE 1917</option>
+        <option>CENTRAL DE ABASTO</option>
+        <option>TASQUEÑA</option>
+        <option>HUIPULCO</option>
+        <option>EL ROSARIO</option>
+        <option>TLÁHUAC</option>
+        <option>PERIFÉRICO ORIENTE</option>
+    </select>
 
-    <button class="guardar" onclick="guardar()">Guardar</button>
+    <input id="codigo" placeholder="Código (ej: 4-1432)">
+
+    <button class="guardar" onclick="guardar()">Agregar</button>
     <button class="resumen" onclick="generar()">Generar Resumen</button>
-    <button class="limpiar" onclick="limpiar()">Limpiar</button>
 </div>
 
-<h3>📌 Registros capturados</h3>
-
+<div class="contenedor">
 <table>
     <thead>
-        <tr>
-            <th>CETRAM</th>
-            <th>MÓDULO</th>
-            <th>CÓDIGO</th>
-            <th>ACCIONES</th>
-        </tr>
+        <tr id="headers"></tr>
     </thead>
-    <tbody id="tablaDatos"></tbody>
+    <tbody id="tabla"></tbody>
 </table>
+</div>
 
 <div class="resumen-box">
     <h3>📊 Resumen</h3>
@@ -111,97 +122,90 @@
                 <th>CANTIDAD</th>
             </tr>
         </thead>
-        <tbody id="tablaResumen"></tbody>
+        <tbody id="resumen"></tbody>
     </table>
 
     <h3 id="total"></h3>
 </div>
 
 <script>
-let datos = JSON.parse(localStorage.getItem("datos")) || [];
-let editando = null;
+const columnas = [
+"ZARAGOZA","PANTITLÁN","SANTA MARTA","INDIOS VERDES","POTRERO","LA RAZA",
+"CHAPULTEPEC","MIXCOAC","UNIVERSIDAD","ZAPATA","CONSTITUCIÓN DE 1917",
+"CENTRAL DE ABASTO","TASQUEÑA","HUIPULCO","EL ROSARIO","TLÁHUAC","PERIFÉRICO ORIENTE"
+];
 
-mostrarTabla();
+let datos = JSON.parse(localStorage.getItem("datos")) || {};
+
+// Inicializar estructura
+columnas.forEach(c => {
+    if (!datos[c]) datos[c] = [];
+});
+
+// Crear encabezados
+const headerRow = document.getElementById("headers");
+columnas.forEach(c => {
+    headerRow.innerHTML += `<th>${c}</th>`;
+});
 
 function guardar() {
-    const cetram = document.getElementById("cetram").value.toUpperCase();
-    const modulo = document.getElementById("modulo").value;
+    const cetram = document.getElementById("cetram").value;
     const codigo = document.getElementById("codigo").value;
 
-    if (!cetram || !modulo || !codigo) {
-        alert("Completa todos los campos");
-        return;
-    }
+    if (!codigo) return alert("Ingresa código");
 
-    if (editando !== null) {
-        datos[editando] = { cetram, modulo, codigo };
-        editando = null;
-    } else {
-        datos.push({ cetram, modulo, codigo });
-    }
+    datos[cetram].push(codigo);
 
     localStorage.setItem("datos", JSON.stringify(datos));
 
-    limpiarInputs();
-    mostrarTabla();
+    document.getElementById("codigo").value = "";
+
+    renderTabla();
 }
 
-function mostrarTabla() {
-    const tbody = document.getElementById("tablaDatos");
+function renderTabla() {
+    const tbody = document.getElementById("tabla");
     tbody.innerHTML = "";
 
-    datos.forEach((d, i) => {
-        tbody.innerHTML += `
-        <tr>
-            <td>${d.cetram}</td>
-            <td>${d.modulo}</td>
-            <td>${d.codigo}</td>
-            <td class="acciones">
-                <button class="editar" onclick="editar(${i})">Editar</button>
-                <button class="eliminar" onclick="eliminar(${i})">Eliminar</button>
-            </td>
-        </tr>`;
-    });
-}
+    let maxFilas = Math.max(...columnas.map(c => datos[c].length));
 
-function editar(i) {
-    const d = datos[i];
-    document.getElementById("cetram").value = d.cetram;
-    document.getElementById("modulo").value = d.modulo;
-    document.getElementById("codigo").value = d.codigo;
+    for (let i = 0; i < maxFilas; i++) {
+        let fila = "<tr>";
 
-    editando = i;
-}
+        columnas.forEach(c => {
+            fila += `<td>${datos[c][i] || ""}</td>`;
+        });
 
-function eliminar(i) {
-    if (confirm("¿Eliminar registro?")) {
-        datos.splice(i, 1);
-        localStorage.setItem("datos", JSON.stringify(datos));
-        mostrarTabla();
+        fila += "</tr>";
+        tbody.innerHTML += fila;
     }
 }
 
 function generar() {
     let resumen = {};
+    let total = 0;
 
-    datos.forEach(d => {
-        let key = d.cetram + "-" + d.modulo;
+    columnas.forEach(c => {
+        datos[c].forEach(codigo => {
+            let modulo = codigo.split("-")[0];
 
-        if (!resumen[key]) {
-            resumen[key] = {
-                cetram: d.cetram,
-                modulo: d.modulo,
-                cantidad: 0
-            };
-        }
+            let key = c + "-" + modulo;
 
-        resumen[key].cantidad++;
+            if (!resumen[key]) {
+                resumen[key] = {
+                    cetram: c,
+                    modulo: modulo,
+                    cantidad: 0
+                };
+            }
+
+            resumen[key].cantidad++;
+            total++;
+        });
     });
 
-    const tbody = document.getElementById("tablaResumen");
+    const tbody = document.getElementById("resumen");
     tbody.innerHTML = "";
-
-    let total = 0;
 
     Object.values(resumen).forEach(r => {
         tbody.innerHTML += `
@@ -210,25 +214,12 @@ function generar() {
             <td>${r.modulo}</td>
             <td>${r.cantidad}</td>
         </tr>`;
-
-        total += r.cantidad;
     });
 
-    document.getElementById("total").innerText = "TOTAL: " + total;
+    document.getElementById("total").innerText = "TOTAL GENERAL: " + total;
 }
 
-function limpiar() {
-    if (confirm("Borrar todo?")) {
-        localStorage.clear();
-        location.reload();
-    }
-}
-
-function limpiarInputs() {
-    document.getElementById("cetram").value = "";
-    document.getElementById("modulo").value = "";
-    document.getElementById("codigo").value = "";
-}
+renderTabla();
 </script>
 
 </body>
