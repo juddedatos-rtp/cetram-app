@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Sistema CETRAM RTP</title>
+<title>CETRAM</title>
 
-<!-- Librerías -->
+<!-- Librería Excel -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body {
@@ -18,14 +17,12 @@ h2 {
     color: #2e7d32;
 }
 
-/* MENÚ VERDE CLARO */
 .form {
     background: #e8f5e9;
     padding: 15px;
     border-radius: 10px;
     margin-bottom: 20px;
     border-left: 6px solid #66bb6a;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
 input, select {
@@ -33,7 +30,6 @@ input, select {
     margin: 5px;
     border-radius: 6px;
     border: 1px solid #ccc;
-    background: #ffffff;
 }
 
 /* BOTONES */
@@ -45,9 +41,8 @@ button {
 }
 
 .agregar { background: #2e7d32; color: white; }
-.total { background: #388e3c; color: white; }
+.total { background: #388e3c; blue: white; }
 .excel { background: green; color: white; }
-.pdf { background: red; color: white; }
 
 /* BLOQUES */
 .bloques {
@@ -61,7 +56,6 @@ button {
     border: 1px solid #ddd;
     border-radius: 10px;
     background: white;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
 .cetram-box h3 {
@@ -100,7 +94,7 @@ td {
 
 <body>
 
-<h2>🟢 Sistema CETRAM RTP</h2>
+<h2> Economicos a Ingresar a CETRAM</h2>
 
 <div class="form">
 
@@ -160,8 +154,7 @@ td {
 
 <button class="agregar" onclick="guardar()">Agregar</button>
 <button class="total" onclick="generar()">Generar Total</button>
-<button class="excel" onclick="exportarExcel()">Excel</button>
-<button class="pdf" onclick="exportarPDF()">PDF</button>
+<button class="excel" onclick="exportarExcel()">Excel General</button>
 
 </div>
 
@@ -169,6 +162,7 @@ td {
 
 <div class="resumen-box">
 <h4>Resumen</h4>
+
 <table>
 <thead>
 <tr>
@@ -181,6 +175,10 @@ td {
 </table>
 
 <h4 id="totalGeneral"></h4>
+
+<br>
+<button class="excel" onclick="exportarResumen()">Excel Resumen</button>
+
 </div>
 
 <script>
@@ -251,7 +249,7 @@ tbody.innerHTML+=`<tr>
 document.getElementById("totalGeneral").innerText="TOTAL GENERAL: "+total;
 }
 
-/* 🟢 EXCEL MATRIZ */
+/* EXCEL MATRIZ */
 function exportarExcel(){
 
 let wb = XLSX.utils.book_new();
@@ -293,62 +291,22 @@ XLSX.utils.book_append_sheet(wb, ws, "REPORTE");
 XLSX.writeFile(wb, "Reporte_CETRAM_RTP.xlsx");
 }
 
-/* 🔴 PDF MATRIZ */
-function exportarPDF(){
+/* EXCEL RESUMEN */
+function exportarResumen(){
 
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF('l','mm','a4');
+let data = [["CETRAM","MODULO","CANTIDAD"]];
 
-let y = 10;
-
-doc.setFontSize(10);
-doc.text("REPORTE CETRAM RTP", 10, y);
-y += 8;
-
-let x = 10;
-Object.keys(datos).forEach(c=>{
-    doc.text(c, x, y);
-    x += 45;
+document.querySelectorAll("#tablaResumen tr").forEach(tr=>{
+let row=[];
+tr.querySelectorAll("td").forEach(td=>row.push(td.innerText));
+if(row.length) data.push(row);
 });
 
-y += 6;
-x = 10;
+let ws = XLSX.utils.aoa_to_sheet(data);
+let wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, "Resumen");
 
-Object.keys(datos).forEach(c=>{
-    doc.text("Eco", x, y);
-    doc.text("Mod", x+12, y);
-    doc.text("Ruta", x+25, y);
-    x += 45;
-});
-
-y += 6;
-
-let max = 0;
-Object.keys(datos).forEach(c=>{
-    if(datos[c].length > max) max = datos[c].length;
-});
-
-for(let i=0;i<max;i++){
-    let x = 10;
-    Object.keys(datos).forEach(c=>{
-        if(datos[c][i]){
-            let d = datos[c][i];
-            doc.text(String(d.economico), x, y);
-            doc.text(String(d.modulo), x+12, y);
-            doc.text(String(d.ruta), x+25, y);
-        }
-        x += 45;
-    });
-
-    y += 6;
-
-    if(y > 190){
-        doc.addPage();
-        y = 10;
-    }
-}
-
-doc.save("Reporte_CETRAM_RTP.pdf");
+XLSX.writeFile(wb, "Resumen_CETRAM.xlsx");
 }
 
 </script>
