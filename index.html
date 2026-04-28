@@ -206,6 +206,22 @@ if(!c || !e || !m || !r) return alert("Completa todos los campos");
 
 if(!datos[c]) datos[c] = [];
 
+/* 🔴 VALIDAR ECONÓMICO REPETIDO */
+let repetido = false;
+
+Object.keys(datos).forEach(cetram=>{
+datos[cetram].forEach(d=>{
+if(d.economico === e){
+repetido = true;
+}
+});
+});
+
+if(repetido){
+return alert("⚠️ Este económico ya fue registrado");
+}
+
+/* GUARDAR NORMAL */
 datos[c].push({economico:e, modulo:m, ruta:r});
 
 document.getElementById("economico").value="";
